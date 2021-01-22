@@ -37,6 +37,7 @@ const def = {
             connect: { deferUntil: 'disconnected' }
         },
         disconnected: {
+            onEntry: { dispatch: 'ready', wait: 200 },
             connect: function () {
                 this.client.connect(this.url)
                     .then(
@@ -59,6 +60,10 @@ describe('FSM', function() {
         before(function() {
             one = fsm(def)
             two = fsm(def)
+        })
+
+        it('should capture event raised onEntry', function (done) {
+            one.on('ready', () => done())
         })
         
         it('should have correct default state', function() {

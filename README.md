@@ -9,23 +9,23 @@ const fsm = require('mfsm')
 const client = require('something')
 const clientFsm = fsm({
     api: {
-        connect: () => {
-            this.handle("connect")
+        connect: function () {
+            this.handle('connect')
             return this.after('connected')
         },
-        disconnect: () => {
-            this.handle("disconnect")
+        disconnect: function () {
+            this.handle('disconnect')
             return this.after('disconnected')
         }
     },
     init: {
-        url: process.ENV.HOST_URL,
+        url: process.env.HOST_URL,
         client: client,
-        default: "disconnected"
+        default: 'disconnected'
     },
     states: {
         connected: {
-            disconnect: () => {
+            disconnect: function () {
                 this.client.disconnect()
                     .then(
                         () => {
@@ -34,14 +34,15 @@ const clientFsm = fsm({
                     )
             }
         },
-        connecting: () => {
-            disconnect: this.deferUntil("connected")
+        connecting: {
+            disconnect: { deferUntil: 'connected' }
         },
-        disconnecting: () => {
-            connect: this.deferUntil("disconnected")
+        disconnecting: {
+            connect: { deferUntil: 'disconnected' }
         },
         disconnected: {
-            connect: () => {
+            onEntry: { dispatch: 'ready', wait: 200 },
+            connect: function () {
                 this.client.connect(this.url)
                     .then(
                         () => {
@@ -49,8 +50,8 @@ const clientFsm = fsm({
                         }
                     )
                 this.next('connecting')
-                this.client.on("closed", () => {
-                    this.next("disconnected")
+                this.once('closed', () => {
+                    this.next('disconnected')
                 })
             }
         }

@@ -30,6 +30,9 @@ function handle (eventName, event) {
 
 function next (state) {
     this.currentState = state
+    if (this.states[state].onEntry) {
+        this.states[state].onEntry()
+    }
     this.dispatch(state, this)
 }
 
@@ -39,9 +42,18 @@ function bindHandles (machine) {
             if (typeof f === 'function') {
                 state[p] = f.bind(machine)
             } else {
-                state[p] = function () {
-                    machine.once(f.deferUntil, () => machine.handle(p))
+                if (f.deferUntil) {
+                    state[p] = function () {
+                        machine.once(f.deferUntil, () => machine.handle(p))
+                    }
+                } else if (f.dispatch) {
+                    state[p] = function () {
+                        setTimeout(() => {
+                            machine.dispatch(f.dispatch, f.data)
+                        }, f.wait || 0)
+                    }
                 }
+                
             }
         })
     })
@@ -62,7 +74,7 @@ module.exports = function (definition) {
         {states: _.clone(definition.states)},
         Dispatch()
     )
-    machine.currentState = machine.default
     bindHandles(machine)
+    machine.next(machine.default)
     return machine
 }
