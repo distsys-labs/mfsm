@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.2](///compare/v1.1.1...v1.1.2) (2021-01-24)
+
+
+### Bug Fixes
+
+* bump topic dispatch to v 1.1.4 ([f626366](///commit/f626366aa67b6084f2ca8fce6ce18ad908160dcf))
+
 ### [1.1.1](///compare/v1.1.0...v1.1.1) (2021-01-24)
 
 

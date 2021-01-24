@@ -1,6 +1,6 @@
 {
   "name": "mfsm",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "my finite state machine. not yours. don't use it.",
   "main": "src/index.js",
   "scripts": {
