@@ -37,7 +37,7 @@ const def = {
             connect: { deferUntil: 'disconnected' }
         },
         disconnected: {
-            onEntry: { dispatch: 'ready', wait: 200 },
+            onEntry: { emit: 'ready', wait: 50 },
             connect: function () {
                 this.client.connect(this.url)
                     .then(
@@ -88,11 +88,14 @@ describe('FSM', function() {
         it('should transition through connecting to connected', function() {
             var states = []
             // this.timeout(5000)
-            clientFsm.on('*', (t) => states.push(t))
-            clientFsm.on('connected', () => {
-                states.should.eql(['connecting', 'connected'])
-            })
-            return clientFsm.connect()
+            return clientFsm.after('ready')
+                .then(() => {
+                    clientFsm.on('*', (t) => states.push(t))
+                    clientFsm.on('connected', () => {
+                        states.should.eql(['connecting', 'connected'])
+                    })
+                    return clientFsm.connect()
+                })
         })
 
         after(function() {

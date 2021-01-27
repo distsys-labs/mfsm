@@ -8,7 +8,7 @@ function after (topic) {
 }
 
 function cleanup () {
-    this.removeAll()
+    this.removeAllListeners()
 }
 
 function deferUntil(state, event) {
@@ -21,7 +21,11 @@ function handle (eventName, event) {
     var current = this.states[this.currentState]
     var handler = current[eventName]
     if (handler) {
-        handler(event)
+        try {
+            handler(event)
+        } catch (e) {
+            console.log(`error occurred handling '${eventName}' in state '${this.currentState}':\n${e}`)
+        }
     } else {
         console.log(`no handler for ${eventName} at state ${this.currentState}`)
         // log warning of no handler at debug level
@@ -29,11 +33,14 @@ function handle (eventName, event) {
 }
 
 function next (state) {
+    this.previousState = this.currentState
     this.currentState = state
-    if (this.states[state].onEntry) {
-        this.states[state].onEntry()
-    }
-    this.dispatch(state, this)
+    process.nextTick(() => {
+        this.emit(state, this)
+        if (this.states[state].onEntry) {
+            this.states[state].onEntry()
+        }
+    })
 }
 
 function bindHandles (machine) {
@@ -46,10 +53,10 @@ function bindHandles (machine) {
                     state[p] = function () {
                         machine.once(f.deferUntil, () => machine.handle(p))
                     }
-                } else if (f.dispatch) {
+                } else if (f.emit) {
                     state[p] = function () {
                         setTimeout(() => {
-                            machine.dispatch(f.dispatch, f.data)
+                            machine.emit(f.emit, f.data)
                         }, f.wait || 0)
                     }
                 }

@@ -41,7 +41,7 @@ const clientFsm = fsm({
             connect: { deferUntil: 'disconnected' }
         },
         disconnected: {
-            onEntry: { dispatch: 'ready', wait: 200 },
+            onEntry: { emit: 'ready', wait: 50 },
             connect: function () {
                 this.client.connect(this.url)
                     .then(
@@ -56,6 +56,7 @@ const clientFsm = fsm({
             }
         }
     }
+}
 })
 
 clientFsm.connect()
