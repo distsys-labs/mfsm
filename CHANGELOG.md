@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](///compare/v1.2.0...v1.3.0) (2021-02-22)
+
+
+### Features
+
+* support handling events by transitioning to a new state with declarative ([d1fe8b5](///commit/d1fe8b5edc2ada6a47771b39b26609bd25b7af00))
+
 ## [1.2.0](///compare/v1.1.2...v1.2.0) (2021-01-27)
 
 
