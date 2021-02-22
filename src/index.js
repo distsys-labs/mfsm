@@ -1,5 +1,7 @@
 const _ = require('fauxdash')
 const Dispatch = require('topic-dispatch')
+const createLogger = require('logging').default
+const log = createLogger('fsm')
 
 function after (topic) {
     var { promise, resolve } = _.future()
@@ -8,40 +10,51 @@ function after (topic) {
 }
 
 function cleanup () {
+    log.debug(`cleaning up all listeners for fsm '${this.getIdentifier()}'`)
     this.removeAllListeners()
 }
 
-function deferUntil(state, event) {
+function deferUntil(state, event, data) {
+    log.debug(`deferring handling of '${event}' until '${state}'`)
     return function () {
-        this.once(state, () => this.handle(event))
+        this.once(state, () => {
+            log.debug(`handling deferred event, '${event}', on change to state '${state}'`)
+            this.handle(event, data)
+        })
     }.bind(this)
+}
+
+function getIdentifier() {
+    return this.id || this.name || 'anonymous'
 }
 
 function handle (eventName, event) {
     var current = this.states[this.currentState]
     var handler = current[eventName]
+    log.debug(`handling event, '${eventName}', in state, '${this.currentState}'`)
     if (handler) {
         try {
             handler(event)
         } catch (e) {
-            console.log(`error occurred handling '${eventName}' in state '${this.currentState}':\n${e}`)
+            log.error(`error occurred handling '${eventName}' in state '${this.currentState}':\n${e}`)
         }
     } else {
-        console.log(`no handler for ${eventName} at state ${this.currentState}`)
-        // log warning of no handler at debug level
+        log.debug(`no handler for ${eventName} at state ${this.currentState}`)
     }
 }
 
 function next (state) {
     this.previousState = this.currentState
     this.currentState = state
+    log.debug(`transitioning from '${this.previousState}' to '${this.currentState}'`)
     process.nextTick(() => {
         this.emit(state, this)
         const s = this.states[state]
         if (s && s.onEntry) {
+            log.debug(`calling ${state}'s onEntry function`)
             s.onEntry()
         } else if (!s) {
-            console.error(`Next was called for missing state '${state}'`)
+            log.error(`Next was called for missing state '${state}'`)
         }
     })
 }
@@ -79,6 +92,7 @@ module.exports = function (definition) {
         after,
         cleanup,
         deferUntil,
+        getIdentifier,
         handle,
         next
     }
