@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.2](///compare/v1.3.1...v1.3.2) (2021-02-22)
+
+
+### Bug Fixes
+
+* add debug level logging to assist with troubleshooting state transitions ([eddc5e3](///commit/eddc5e34e59d6dc7302370820b29e92f3595b1d0))
+
 ### [1.3.1](///compare/v1.3.0...v1.3.1) (2021-02-22)
 
 
