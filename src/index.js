@@ -59,8 +59,13 @@ function bindHandles (machine) {
                             machine.emit(f.emit, f.data)
                         }, f.wait || 0)
                     }
+                } else if (f.next) {
+                    state[p] = function () {
+                        setTimeout(() => {
+                            machine.next(f.next)
+                        }, f.wait || 0)
+                    }
                 }
-                
             }
         })
     })
