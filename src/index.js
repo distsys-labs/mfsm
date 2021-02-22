@@ -37,8 +37,11 @@ function next (state) {
     this.currentState = state
     process.nextTick(() => {
         this.emit(state, this)
-        if (this.states[state].onEntry) {
-            this.states[state].onEntry()
+        const s = this.states[state]
+        if (s && s.onEntry) {
+            s.onEntry()
+        } else if (!s) {
+            console.error(`Next was called for missing state '${state}'`)
         }
     })
 }
