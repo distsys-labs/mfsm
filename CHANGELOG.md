@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.1](///compare/v1.3.0...v1.3.1) (2021-02-22)
+
+
+### Bug Fixes
+
+* log error when next is called for a non-existent state ([48052c6](///commit/48052c6d6eb42a56b0432f3141e29050878336ec))
+
 ## [1.3.0](///compare/v1.2.0...v1.3.0) (2021-02-22)
 
 
