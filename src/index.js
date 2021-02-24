@@ -10,18 +10,22 @@ function after (topic) {
 }
 
 function cleanup () {
-    log.debug(`cleaning up all listeners for fsm '${this.getIdentifier()}'`)
+    log.debug(` cleaning up all listeners'`)
     this.removeAllListeners()
 }
 
 function deferUntil(state, event, data) {
-    log.debug(`deferring handling of '${event}' until '${state}'`)
+    log.debug(`${this.getContext()} deferring handling of '${event}' until '${state}'`)
     return function () {
         this.once(state, () => {
-            log.debug(`handling deferred event, '${event}', on change to state '${state}'`)
+            log.debug(`${this.getContext()} handling deferred event, '${event}', on change to state '${state}'`)
             this.handle(event, data)
         })
     }.bind(this)
+}
+
+function getContext() {
+  return `(${this.getIdentifier()}[${this.currentState}])`
 }
 
 function getIdentifier() {
@@ -31,32 +35,32 @@ function getIdentifier() {
 function handle (eventName, event) {
     var current = this.states[this.currentState]
     var handler = current[eventName]
-    log.debug(`handling event, '${eventName}', in state, '${this.currentState}'`)
+    log.debug(`${this.getContext()} handling event, '${eventName}'`)
     if (handler) {
         try {
             handler(event)
         } catch (e) {
-            log.error(`error occurred handling '${eventName}' in state '${this.currentState}':\n${e}`)
+            log.error(`${this.getContext()} error occurred handling '${eventName}':\n${e}`)
         }
     } else {
-        log.debug(`no handler for ${eventName} at state ${this.currentState}`)
+        log.debug(`${this.getContext()} no handler for ${eventName}`)
     }
 }
 
-function next (state) {
-    this.previousState = this.currentState
-    this.currentState = state
-    log.debug(`transitioning from '${this.previousState}' to '${this.currentState}'`)
-    process.nextTick(() => {
-        this.emit(state, this)
-        const s = this.states[state]
-        if (s && s.onEntry) {
-            log.debug(`calling ${state}'s onEntry function`)
-            s.onEntry()
-        } else if (!s) {
-            log.error(`Next was called for missing state '${state}'`)
-        }
-    })
+function next (state, data) {
+  log.debug(`${this.getContext()} transitioning to '${state}'`)
+  this.previousState = this.currentState
+  this.currentState = state
+  process.nextTick(() => {
+      this.emit(state, data)
+      const s = this.states[state]
+      if (s && s.onEntry) {
+          log.debug(`${this.getContext()} calling onEntry function`)
+          s.onEntry(data)
+      } else if (!s) {
+          log.error(`${this.getContext()} next was called for missing state '${state}'`)
+      }
+  })
 }
 
 function bindHandles (machine) {
@@ -66,19 +70,19 @@ function bindHandles (machine) {
                 state[p] = f.bind(machine)
             } else {
                 if (f.deferUntil) {
-                    state[p] = function () {
-                        machine.once(f.deferUntil, () => machine.handle(p))
+                    state[p] = function (data) {
+                        machine.once(f.deferUntil, () => machine.handle(p, data))
                     }
                 } else if (f.emit) {
-                    state[p] = function () {
+                    state[p] = function (data) {
                         setTimeout(() => {
-                            machine.emit(f.emit, f.data)
+                            machine.emit(f.emit, data || f.data)
                         }, f.wait || 0)
                     }
                 } else if (f.next) {
-                    state[p] = function () {
+                    state[p] = function (data) {
                         setTimeout(() => {
-                            machine.next(f.next)
+                            machine.next(f.next, data)
                         }, f.wait || 0)
                     }
                 }
@@ -92,6 +96,7 @@ module.exports = function (definition) {
         after,
         cleanup,
         deferUntil,
+        getContext,
         getIdentifier,
         handle,
         next
