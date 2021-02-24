@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.3.3](///compare/v1.3.1...v1.3.3) (2021-02-24)
+
+
+### Bug Fixes
+
+* add debug level logging to assist with troubleshooting state transitions ([eddc5e3](///commit/eddc5e34e59d6dc7302370820b29e92f3595b1d0))
+* improve debug messages by including state. fix broken pass through of event between states ([ec876e4](///commit/ec876e4ec9267c55bc9f18bb38dfb1c0bd950dd7))
+
 ### [1.3.2](///compare/v1.3.1...v1.3.2) (2021-02-22)
 
 
