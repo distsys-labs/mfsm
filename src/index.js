@@ -10,8 +10,20 @@ function after (topic) {
 }
 
 function cleanup () {
-    log.debug(` cleaning up all listeners'`)
+    log.debug(`${this.getContext()} cleaning up all listeners'`)
     this.removeAllListeners()
+}
+
+function deferredLog(machine, f, data) {
+  if (f.debug) {
+    log.debug(interpret(machine, f.debug, data))
+  } else if (f.info){
+    log.info(interpret(machine, f.info, data))
+  } else if (f.warn){
+    log.warn(interpret(machine, f.warn, data))
+  } else if (f.error){
+    log.error(interpret(machine, f.error, data))
+  }
 }
 
 function deferUntil(state, event, data) {
@@ -47,6 +59,14 @@ function handle (eventName, event) {
     }
 }
 
+function interpret(machine, logger, data) {
+  if (typeof logger == 'function') {
+    return logger.call(machine, data)
+  } else {
+    return logger
+  }
+}
+
 function next (state, data) {
   log.debug(`${this.getContext()} transitioning to '${state}'`)
   this.previousState = this.currentState
@@ -71,19 +91,30 @@ function bindHandles (machine) {
             } else {
                 if (f.deferUntil) {
                     state[p] = function (data) {
+                        deferredLog(machine, f, data)
                         machine.once(f.deferUntil, () => machine.handle(p, data))
                     }
                 } else if (f.emit) {
                     state[p] = function (data) {
+                        deferredLog(machine, f, data)
                         setTimeout(() => {
                             machine.emit(f.emit, data || f.data)
                         }, f.wait || 0)
                     }
                 } else if (f.next) {
                     state[p] = function (data) {
+                        deferredLog(machine, f, data)
                         setTimeout(() => {
                             machine.next(f.next, data)
                         }, f.wait || 0)
+                    }
+                } else if (f.forward) {
+                    state[p] = function (data) {
+                      deferredLog(machine, f, data)
+                      machine.once(f.after || f.forward, () => machine.handle(p, data))
+                      setTimeout(() => {
+                          machine.next(f.forward, data)
+                      }, f.wait || 0)
                     }
                 }
             }
