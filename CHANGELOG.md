@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](///compare/v1.4.0...v1.5.0) (2021-03-12)
+
+
+### Features
+
+* improve declarative handling by removing mutual exclusions ([323c37f](///commit/323c37f98597ba289f0640bd8c73bc8151f9333c))
+
+
+### Bug Fixes
+
+* bump topic-dispatch dependency to 1.3.1 ([b9fe650](///commit/b9fe650fac3fb8bbf6ae254ecff6cbabd81bbfcd))
+
 ## [1.4.0](///compare/v1.3.3...v1.4.0) (2021-02-27)
 
 
