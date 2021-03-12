@@ -83,40 +83,35 @@ function next (state, data) {
   })
 }
 
+function buildFromDeclarative (machine, eventName, definition) {
+    return function (data) {
+        const relay = data || definition.data
+        const next = definition.next || definition.forward
+        const after = definition.deferUntil || definition.forward || definition.after
+        deferredLog(machine, definition, relay)
+        if (after) {
+            machine.once(after, () => machine.handle(eventName, relay))
+        }
+        if (definition.emit) {
+            setTimeout(() => {
+                machine.emit(definition.emit, relay)
+            }, definition.wait || 0)
+        } 
+        if (next) {
+            setTimeout(() => {
+                machine.next(next, relay)
+            }, definition.wait || 0)
+        }
+    }.bind(machine)
+}
+
 function bindHandles (machine) {
     _.each(machine.states, (state, name) => {
-        _.each(state, (f, p) => {
-            if (typeof f === 'function') {
-                state[p] = f.bind(machine)
+        _.each(state, (definition, eventName) => {
+            if (typeof definition === 'function') {
+                state[eventName] = definition.bind(machine)
             } else {
-                if (f.deferUntil) {
-                    state[p] = function (data) {
-                        deferredLog(machine, f, data)
-                        machine.once(f.deferUntil, () => machine.handle(p, data))
-                    }
-                } else if (f.emit) {
-                    state[p] = function (data) {
-                        deferredLog(machine, f, data)
-                        setTimeout(() => {
-                            machine.emit(f.emit, data || f.data)
-                        }, f.wait || 0)
-                    }
-                } else if (f.next) {
-                    state[p] = function (data) {
-                        deferredLog(machine, f, data)
-                        setTimeout(() => {
-                            machine.next(f.next, data)
-                        }, f.wait || 0)
-                    }
-                } else if (f.forward) {
-                    state[p] = function (data) {
-                      deferredLog(machine, f, data)
-                      machine.once(f.after || f.forward, () => machine.handle(p, data))
-                      setTimeout(() => {
-                          machine.next(f.forward, data)
-                      }, f.wait || 0)
-                    }
-                }
+                state[eventName] = buildFromDeclarative(machine, eventName, definition)
             }
         })
     })

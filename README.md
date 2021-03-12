@@ -62,3 +62,12 @@ const clientFsm = fsm({
 clientFsm.connect()
     .then(() => { console.log("connection established") })
 ```
+
+### Declarative Handle Properties
+
+ * `emit` - emits an event from the FSM
+ * `next` - transitions FSM to a new state
+ * `after` - shorthand for deferUntil
+ * `deferUntil` - delays handling the event until after a specific state has occurred
+ * `forward` - forwards the event to a new state (after + next)
+ * `wait` - amount of time (in ms) to wait before emitting events or transitioning
