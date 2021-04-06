@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](///compare/v1.5.0...v1.6.0) (2021-04-06)
+
+
+### Features
+
+* add forward as an API call ([8621479](///commit/86214793b77e6330368bb37774eed93a388b004b))
+
 ## [1.5.0](///compare/v1.4.0...v1.5.0) (2021-03-12)
 
 
