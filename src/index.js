@@ -36,6 +36,13 @@ function deferUntil(state, event, data) {
     }.bind(this)
 }
 
+function forward(state, event, data) {
+  process.nextTick(() => {
+    this.next(state, data)
+  })
+  return this.deferUntil(state, event, data)
+}
+
 function getContext() {
   return `(${this.getIdentifier()}[${this.currentState}])`
 }
@@ -68,19 +75,23 @@ function interpret(machine, logger, data) {
 }
 
 function next (state, data) {
-  log.debug(`${this.getContext()} transitioning to '${state}'`)
+  log.debug(`${this.getContext()} transitioning to '${state}' from ${this.currentState}`)
   this.previousState = this.currentState
   this.currentState = state
+  const { promise, resolve, reject } = _.future()
   process.nextTick(() => {
-      this.emit(state, data)
       const s = this.states[state]
       if (s && s.onEntry) {
           log.debug(`${this.getContext()} calling onEntry function`)
-          s.onEntry(data)
+          resolve(s.onEntry(data))
       } else if (!s) {
-          log.error(`${this.getContext()} next was called for missing state '${state}'`)
+          const err = `${this.getContext()} next was called for missing state '${state}'`
+          log.error(err)
+          reject(new Error(err))
       }
+      this.emit(state, data)
   })
+  return promise
 }
 
 function buildFromDeclarative (machine, eventName, definition) {
@@ -90,15 +101,19 @@ function buildFromDeclarative (machine, eventName, definition) {
         const after = definition.deferUntil || definition.forward || definition.after
         deferredLog(machine, definition, relay)
         if (after) {
-            machine.once(after, () => machine.handle(eventName, relay))
+            machine.once(after, () => {
+              log.debug(`${this.getContext()} replaying event ${eventName} in ${after}`)
+              machine.handle(eventName, relay)
+            })
         }
         if (definition.emit) {
             setTimeout(() => {
                 machine.emit(definition.emit, relay)
             }, definition.wait || 0)
-        } 
+        }
         if (next) {
             setTimeout(() => {
+                log.debug(`${this.getContext()} transitioning to ${next} on event '${eventName}'`)
                 machine.next(next, relay)
             }, definition.wait || 0)
         }
@@ -122,6 +137,7 @@ module.exports = function (definition) {
         after,
         cleanup,
         deferUntil,
+        forward,
         getContext,
         getIdentifier,
         handle,
