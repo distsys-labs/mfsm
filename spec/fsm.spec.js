@@ -90,7 +90,7 @@ describe('FSM', function() {
             // this.timeout(5000)
             return clientFsm.after('ready')
                 .then(() => {
-                    clientFsm.on('*', (t) => states.push(t))
+                    clientFsm.on('*', (ev, t) => states.push(t))
                     clientFsm.on('connected', () => {
                         states.should.eql(['connecting', 'connected'])
                     })
