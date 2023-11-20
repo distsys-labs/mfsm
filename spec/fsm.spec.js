@@ -85,17 +85,17 @@ describe('FSM', function() {
             clientFsm = fsm(def)
         })
         
-        it('should transition through connecting to connected', function() {
+        it('should transition through connecting to connected', async function() {
             var states = []
-            // this.timeout(5000)
-            return clientFsm.after('ready')
+            await clientFsm.after('ready')
                 .then(() => {
                     clientFsm.on('*', (ev, t) => states.push(t))
-                    clientFsm.on('connected', () => {
-                        states.should.eql(['connecting', 'connected'])
-                    })
                     return clientFsm.connect()
                 })
+            states.should.eql([
+                'connecting',
+                'connected'
+            ])
         })
 
         after(function() {
@@ -118,6 +118,31 @@ describe('FSM', function() {
 
         after(function() {
             clientFsm.cleanup()
+        })
+    })
+
+    describe('when emitting from external call', function() {
+        var myFsm
+        before(function() {
+            myFsm = fsm({
+                api: {
+                    sayHi: () => {
+
+                    }
+                },
+                init: {
+                    default: 'starting'
+                },
+                states: {
+                    "starting": {},
+                    "started": {},
+                }
+            })
+        })
+
+        it('should correctly emit events to consumers', function(done) {
+            myFsm.on('test', () => done())
+            myFsm.emit('test', {})
         })
     })
 })
