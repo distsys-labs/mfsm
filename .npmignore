@@ -3,8 +3,15 @@ tmp/
 node_modules/
 log/
 spec/
+tests/
 plato/
 coverage/
 .vagrant/
 .nyc_output
 .git
+.vitest/
+src/
+tsconfig.json
+vitest.config.ts
+eslint.config.js
+*.tsbuildinfo
