@@ -145,4 +145,69 @@ describe('FSM', () => {
       })
     })
   })
+
+  describe('deferUntil / forward / onEntry timing fixes', () => {
+    it('should not emit state entry until an async onEntry settles', async () => {
+      const order: string[] = []
+      const testFsm = fsm({
+        api: {},
+        init: { default: 'idle' },
+        states: {
+          idle: {},
+          loading: {
+            onEntry: () => new Promise<void>((resolve) => {
+              setTimeout(() => { order.push('onEntry done'); resolve() }, 20)
+            })
+          }
+        }
+      })
+      testFsm.on('loading', () => { order.push('emitted') })
+      await testFsm.next('loading')
+      expect(order).toEqual(['onEntry done', 'emitted'])
+    })
+
+    it('should defer an imperative deferUntil call without needing to invoke a returned closure', async () => {
+      const seen: string[] = []
+      const testFsm = fsm({
+        api: {},
+        init: { default: 'a' },
+        states: {
+          a: {
+            go: function (this: FSMInstance) {
+              this.deferUntil('b', 'go')
+            }
+          },
+          b: {
+            go: function () { seen.push('replayed-in-b') }
+          }
+        }
+      })
+      testFsm.handle('go')
+      expect(seen).toEqual([])
+      await testFsm.next('b')
+      expect(seen).toEqual(['replayed-in-b'])
+    })
+
+    it('should defer until whatever transition happens next when state is omitted', async () => {
+      const seen: string[] = []
+      const testFsm = fsm({
+        api: {},
+        init: { default: 'a' },
+        states: {
+          a: {
+            go: function (this: FSMInstance) {
+              this.deferUntil(null, 'go')
+            }
+          },
+          b: {
+            go: function () { seen.push('replayed-in-b') }
+          }
+        }
+      })
+      testFsm.handle('go')
+      expect(seen).toEqual([])
+      await testFsm.next('b')
+      expect(seen).toEqual(['replayed-in-b'])
+    })
+  })
 })

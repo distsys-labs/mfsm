@@ -89,7 +89,8 @@ states: {
 machine.handle('eventName', data?)  // dispatch event to current state handler
 machine.next('stateName')           // transition to a new state
 machine.after('stateName')          // Promise that resolves when state is entered
-machine.deferUntil('stateName')     // re-dispatch current event after state is reached
+machine.deferUntil('stateName', 'eventName', data?)  // re-dispatch 'eventName' once 'stateName' is reached
+machine.deferUntil(null, 'eventName', data?)         // re-dispatch 'eventName' after whatever transition happens next
 machine.emit('eventName', data?)    // emit event from the FSM (like EventEmitter)
 machine.once('eventName', fn)       // subscribe to one FSM event
 machine.on('pattern', fn)           // subscribe with AMQP wildcard pattern
@@ -103,7 +104,7 @@ machine.cleanup()                   // remove all listeners and timers
 ## Event Patterns (via topic-dispatch)
 
 ```typescript
-machine.on('*', handler)            // all events
+machine.on('*', handler)            // all single-segment events ('#' is the true any-depth catch-all)
 machine.on('state.*', handler)      // events matching one-segment suffix
 machine.on('connected', handler)    // exact event name
 ```
@@ -114,7 +115,9 @@ machine.on('connected', handler)    // exact event name
 - `this.after('state')` returns a Promise — always `await` or `.then()` it.
 - `onEntry` runs when a state is entered via `this.next()`. It does not run for the initial state unless you call `this.next(init.default)` manually.
 - Declarative `deferUntil` re-queues the event, so the handler for it in the target state will be called with the *original* event data.
-- State names in `deferUntil`/`after` must exactly match a key in `states`.
+- State names in `deferUntil`/`after` must exactly match a key in `states`, except that `deferUntil`'s `state` argument can be omitted/falsy to mean "whatever transition happens next."
+- `this.deferUntil(...)`/`this.forward(...)` register the deferred handling immediately (a plain method call, nothing further to invoke) — they do not return anything meaningful.
+- `next()`'s returned promise correctly waits for an async `onEntry` to settle; so does the `emit()` that fires on state entry (and therefore `after()`/`on()`/`once()` listeners) — both now happen only once `onEntry`'s result (sync or async) has actually resolved or rejected.
 
 ## Used By
 

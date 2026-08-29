@@ -98,11 +98,13 @@ export interface FSMBaseMethods {
   /** Clean up all event listeners */
   cleanup(): void
 
-  /** Defer handling an event until a specific state is reached */
-  deferUntil(state: string, event: string, data?: unknown): () => void
+  /** Defer handling an event until a specific state is reached. Omit
+   * (or pass a falsy) state to defer until whatever transition happens
+   * next, regardless of which state it lands in. */
+  deferUntil(state: string | null | undefined, event: string, data?: unknown): void
 
   /** Forward to a state and defer event handling */
-  forward(state: string, event: string, data?: unknown): () => void
+  forward(state: string, event: string, data?: unknown): void
 
   /** Get context string for logging */
   getContext(): string
