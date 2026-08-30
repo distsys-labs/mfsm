@@ -43,21 +43,24 @@ function deferredLog(
 
 function deferUntil(
   this: FSMInstance,
-  state: string,
+  state: string | null | undefined,
   event: string,
   data?: unknown
-): () => void {
+): void {
+  // An omitted/falsy state means "defer until whatever transition happens
+  // next" - '#' is topic-dispatch's catch-all pattern, matching any state
+  // name emitted by next(), so a single once() registration covers it
+  // without needing a separate synthetic "any transition" event.
+  const target = state || '#'
   log.debug(
-    `${this.getContext()} deferring handling of '${event}' until '${state}'`
+    `${this.getContext()} deferring handling of '${event}' until '${target}'`
   )
-  return function (this: FSMInstance) {
-    this.once(state, () => {
-      log.debug(
-        `${this.getContext()} handling deferred event, '${event}', on change to state '${state}'`
-      )
-      this.handle(event, data)
-    })
-  }.bind(this)
+  this.once(target, () => {
+    log.debug(
+      `${this.getContext()} handling deferred event, '${event}', on change to state '${target}'`
+    )
+    this.handle(event, data)
+  })
 }
 
 function forward(
@@ -65,11 +68,11 @@ function forward(
   state: string,
   event: string,
   data?: unknown
-): () => void {
+): void {
   process.nextTick(() => {
     this.next(state, data)
   })
-  return this.deferUntil(state, event, data)
+  this.deferUntil(state, event, data)
 }
 
 function getContext(this: FSMInstance): string {
@@ -122,16 +125,29 @@ function next(this: FSMInstance, state: string, data?: unknown): Promise<void> {
     const s = this.states[state]
     if (s?.onEntry) {
       log.debug(`${this.getContext()} calling onEntry function`)
-      const result = (s.onEntry as EventHandler)(data)
-      resolve(result as void)
+      // emit() must wait for onEntry's result to settle (it may be async)
+      // before firing - otherwise after()/on()/once() listeners observe
+      // "state entered" before onEntry's setup work has actually finished,
+      // even though next()'s own returned promise correctly waits for it.
+      Promise.resolve((s.onEntry as EventHandler)(data)).then(
+        (result) => {
+          this.emit(state, data)
+          resolve(result as void)
+        },
+        (err) => {
+          this.emit(state, data)
+          reject(err)
+        }
+      )
     } else if (!s) {
       const err = `${this.getContext()} next was called for missing state '${state}'`
       log.error(err)
+      this.emit(state, data)
       reject(new Error(err))
     } else {
+      this.emit(state, data)
       resolve()
     }
-    this.emit(state, data)
   })
   return promise
 }
