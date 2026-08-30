@@ -1,6 +1,6 @@
 {
   "name": "mfsm",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "my finite state machine. not yours. don't use it.",
   "type": "module",
   "main": "./dist/index.js",
