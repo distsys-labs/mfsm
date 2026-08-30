@@ -36,9 +36,9 @@
   "author": "Alex Robson",
   "license": "MIT",
   "dependencies": {
-    "fauxdash": "^1.8.6",
+    "fauxdash": "^1.9.1",
     "logging": "^4.2.0",
-    "topic-dispatch": "^3.0.0"
+    "topic-dispatch": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
